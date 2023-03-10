@@ -1,16 +1,21 @@
 import rasterio
 
+import rasterio
+
 with rasterio.open('dem1.tif') as src1:
     meta1 = src1.meta
+    bounds1 = src1.bounds
     dem1 = src1.read(1)
 
 with rasterio.open('dem2.tif') as src2:
     meta2 = src2.meta
+    bounds2 = src2.bounds
     dem2 = src2.read(1)
 
 from rasterio.coords import disjoint_bounds
 
-bounds = disjoint_bounds([src1, src2])
+bounds = disjoint_bounds([bounds1, bounds2])
+
 
 from rasterio.warp import calculate_default_transform, reproject
 
