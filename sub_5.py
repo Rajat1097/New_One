@@ -1,5 +1,5 @@
 import rasterio
-from rasterio.mask import mask
+from rasterio.windows import Window
 from shapely.geometry import box
 
 with rasterio.open('dem1.tif') as src1:
@@ -19,29 +19,21 @@ intersection = bbox1.intersection(bbox2)
 
 # Check if the intersection is valid
 if not intersection.is_empty:
-    # Convert the intersection to a GeoJSON-like geometry
-    geometry = rasterio.features.geometry_mask(
-        [intersection],
-        out_shape=dem1.shape,
-        transform=meta1['transform']
-    )
-
-    # Extract the overlapping area from the two rasters
-    overlap1, overlap_transform = mask(src1, geometry, crop=True)
-    overlap2, _ = mask(src2, geometry, crop=True)
+    # Compute the window of the overlapping area
+    x1, y1, x2, y2 = intersection.bounds
+    w = int((x2 - x1) / meta1['transform'][0])
+    h = int((y2 - y1) / meta1['transform'][4])
+    col_off = int((x1 - bounds1.left) / meta1['transform'][0])
+    row_off = int((bounds1.top - y2) / meta1['transform'][4])
+    window = Window(col_off, row_off, w, h)
 
     # Perform the subtraction of the overlapping area
-    result = overlap2.copy()
-    result -= overlap1
+    result = dem2.copy()
+    result[window] -= dem1[window]
 
     # Write the result to a new raster file
-    meta2.update({
-        'transform': overlap_transform,
-        'height': overlap1.shape[1],
-        'width': overlap1.shape[2]
-    })
     with rasterio.open('result.tif', 'w', **meta2) as dst:
-        dst.write(result)
+        dst.write(result, 1)
 
 else:
     raise ValueError('The input rasters do not overlap.')
