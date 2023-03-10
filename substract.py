@@ -19,6 +19,8 @@ window2 = dem2.window(left, bottom, right, top)
 # Extract the overlapping portions of each DEM
 overlap1 = data1[window1[0]:window1[1], window1[2]:window1[3]]
 overlap2 = data2[window2[0]:window2[1], window2[2]:window2[3]]
+window_data = data[window.row_off:window.row_off + window.height, window.col_off:window.col_off + window.width]
+
 
 # Subtract one DEM from the other in the overlapping area
 result = overlap1 - overlap2
