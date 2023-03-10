@@ -1,5 +1,6 @@
 import rasterio
-import numpy as np
+from rasterio.transform import from_origin
+from rasterio.crs import CRS
 
 # Load the two DEMs
 with rasterio.open('dem1.tif') as src1, rasterio.open('dem2.tif') as src2:
@@ -25,4 +26,9 @@ diff_ice = diff * mask
 pixel_area = abs(transform[0] * transform[4]) # area of each pixel in square meters
 volume_change = np.sum(diff_ice) * pixel_area
 
+# Write the volume change to a new GeoTIFF file
+with rasterio.open('volume_change.tif', 'w', driver='GTiff', height=diff.shape[0], width=diff.shape[1], count=1, dtype=diff.dtype, crs=CRS.from_epsg(4326), transform=from_origin(src1.bounds.left, src1.bounds.top, transform[0], transform[4])) as dst:
+    dst.write(diff_ice, 1)
+
 print('Volume change:', volume_change, 'cubic meters')
+
